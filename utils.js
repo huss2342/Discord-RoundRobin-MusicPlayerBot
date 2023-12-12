@@ -25,7 +25,7 @@ function cleanupSongs(guildId) {
             });
 
             // remove the directory as well
-            fs.rm(guildDirectory, { recursive: true }, err => {
+            fs.rmdir(guildDirectory, { recursive: true }, err => {
                 if (err) {
                     console.error(`Error deleting directory ${guildDirectory}:`, err);
                 } else {
