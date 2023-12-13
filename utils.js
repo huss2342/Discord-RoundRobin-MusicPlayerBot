@@ -2,8 +2,8 @@ const path = require('path');
 const fs = require('fs');
 
 
-function cleanupSongs(guildId) {
-    console.log(`!!!!!!Cleaning up songs for guild ID ${guildId}`);
+function cleanupSongsUtil(guildId) {
+    console.log(`Cleaning up songs for guild ID ${guildId}`);
     const guildDirectory = path.join(__dirname, `temp_${guildId}`);
 
     if (fs.existsSync(guildDirectory)) {
@@ -15,16 +15,18 @@ function cleanupSongs(guildId) {
 
             files.forEach(file => {
                 const filePath = path.join(guildDirectory, file);
-                fs.unlink(filePath, err => {
-                    if (err) {
-                        console.error(`Error deleting file ${filePath}:`, err);
-                    } else {
-                        console.log(`Deleted song file: ${filePath}`);
-                    }
-                });
+                if (fs.existsSync(filePath)) {
+                    fs.unlink(filePath, err => {
+                        if (err) {
+                            console.error(`Error deleting file ${filePath}:`, err);
+                        } else {
+                            console.log(`Deleted song file: ${filePath}`);
+                        }
+                    });
+                }
             });
 
-            // remove the directory as well
+            // Remove the directory as well
             fs.rm(guildDirectory, { recursive: true }, err => {
                 if (err) {
                     console.error(`Error deleting directory ${guildDirectory}:`, err);
@@ -38,8 +40,7 @@ function cleanupSongs(guildId) {
     }
 }
 
-
-function createTempFileForGuild(guildId) {
+function createTempFileForGuildUtil(guildId) {
     const guildDirectory = path.join(__dirname, `temp_${guildId}`);
     if (!fs.existsSync(guildDirectory)) {
         fs.mkdirSync(guildDirectory, { recursive: true });
@@ -53,6 +54,6 @@ function createTempFileForGuild(guildId) {
 }
 
 module.exports = {
-    cleanupSongs,
-    createTempFileForGuild,
+    cleanupSongsUtil,
+    createTempFileForGuildUtil,
 }
