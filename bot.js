@@ -1,9 +1,8 @@
 const { Client, GatewayIntentBits, REST, Routes } = require("discord.js");
 const { token, clientId, guildId } = require("./config.json");
 
-
 // -- my imports --
-const MusicBot = require('./MusicBot'); 
+const MusicBot = require("./MusicBot");
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
@@ -11,8 +10,16 @@ const client = new Client({
 
 const musicBot = new MusicBot();
 
+const {
+  handleMultipleOperations,
+  moveOperation,
+  swapOperation,
+  removeOperation,
+  stringifyQueueWithIndex,
+} = require("./utilsQueueOperations");
+
 client.once("ready", () => {
-  console.log("--------------------------------------------------------");
+  console.log("------------------------------");
   console.log("Ready!");
 });
 
@@ -33,6 +40,86 @@ client.on("interactionCreate", async (interaction) => {
 
     case "play":
       musicBot.play(interaction);
+      break;
+
+    case "current_song":
+      const currentSong = musicBot.getCurrentSong();
+      if (currentSong) {
+        await interaction.reply(`Currently playing: ${currentSong.url}`);
+      } else {
+        await interaction.reply("Nothing is currently playing.");
+      }
+      break;
+
+    case "pause":
+      musicBot.pauseSong();
+      await interaction.reply("Paused the current song.");
+      break;
+
+    case "resume":
+      musicBot.resumeSong();
+      await interaction.reply("Resumed the current song.");
+      break;
+
+    /* ----------------------- queue managment ----------------------- */
+    case "skip":
+      musicBot.skipSong();
+      await interaction.reply("Skipped the current song.");
+      break;
+
+    case "queue_show":
+      const queueString = stringifyQueueWithIndex(musicBot.queue);
+      await interaction.reply(`Current Queue:\n${queueString}`);
+      break;
+
+    case "queue_clear":
+      musicBot.queue.clear();
+      await interaction.reply("Cleared the queue.");
+      break;
+
+    case "jump":
+      const indexToJump = interaction.options.getInteger("index");
+      musicBot.queue.jumpToIndex(indexToJump);
+      await interaction.reply(`Jumped to song at index ${indexToJump}.`);
+      break;
+
+    case "move":
+      const moveInput = interaction.options.getString("positions");
+      handleMultipleOperations(musicBot.queue, moveInput, moveOperation, ":");
+      await interaction.reply("Moved songs as requested.");
+      break;
+
+    case "swap":
+      const swapInput = interaction.options.getString("indexes");
+      handleMultipleOperations(musicBot.queue, swapInput, swapOperation, ":");
+      await interaction.reply("Swapped songs as requested.");
+      break;
+
+    case "remove_index":
+      const removeInput = interaction.options.getString("index");
+      handleMultipleOperations(
+        musicBot.queue,
+        removeInput,
+        removeOperation,
+        ","
+      );
+      await interaction.reply("Removed songs as requested.");
+      break;
+
+    /* ----------------------- playlist managment -----------------------*/
+    case "createplaylist":
+      // Add logic to handle playlist creation
+      break;
+
+    case "addtoplaylist":
+      const playlistName = interaction.options.getString("playlist");
+      const songToAdd = interaction.options.getString("song");
+      // Add logic to add song to specified playlist
+      break;
+
+    case "viewplaylist":
+      const playlistToView = interaction.options.getString("name");
+      // Add logic to display songs in the specified playlist
       break;
   }
 });

@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const ytdl = require("ytdl-core");
 
 
 function cleanupSongsUtil(guildId) {
@@ -53,7 +54,36 @@ function createTempFileForGuildUtil(guildId) {
     return filePath;
 }
 
+function downloadSongUtil(url, path) {
+    console.log("Downloading song:", url, "to path:", path);
+    const stream = ytdl(url, { filter: "audioonly" });
+    const writer = fs.createWriteStream(path);
+    stream.pipe(writer);
+    
+    return new Promise((resolve, reject) => {
+        writer.on("finish", resolve);
+        writer.on("error", reject);
+    });
+}
+
+function deleteSongFileUtil(filePath) {
+    fs.unlink(filePath, (err) => {
+        if (err) {
+            console.error("Error deleting song file:", err);
+        } else {
+            console.log(`Deleted song file: ${filePath}`);
+        }
+    });
+}
+
+function invalidSongURL(songUrl){
+    return (!songUrl || !ytdl.validateURL(songUrl));
+}
+
 module.exports = {
     cleanupSongsUtil,
     createTempFileForGuildUtil,
-}
+    downloadSongUtil,
+    deleteSongFileUtil,
+    invalidSongURL
+};
