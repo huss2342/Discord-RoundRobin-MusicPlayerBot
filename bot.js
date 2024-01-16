@@ -63,8 +63,7 @@ client.on("interactionCreate", async (interaction) => {
 
     /* ----------------------- queue managment ----------------------- */
     case "skip":
-      musicBot.skipSong();
-      await interaction.reply("Skipped the current song.");
+      musicBot.skipSong(interaction);
       break;
 
     case "queue_show":
@@ -76,6 +75,7 @@ client.on("interactionCreate", async (interaction) => {
       musicBot.queue.clear();
       await interaction.reply("Cleared the queue.");
       break;
+      // works till here so far----------------
 
     case "jump":
       const indexToJump = interaction.options.getInteger("index");
@@ -104,6 +104,21 @@ client.on("interactionCreate", async (interaction) => {
         ","
       );
       await interaction.reply("Removed songs as requested.");
+      break;
+
+    case "insert_at_index":
+      const insertIndex = interaction.options.getInteger("index");
+      const insertSongURL = interaction.options.getString("song");
+      musicBot.queue.insertSongAtIndex(insertIndex, insertSongURL);
+      await interaction.reply(
+        `Inserted ${insertSong} at index ${insertIndex}.`
+      );
+      break;
+
+    case "insert_next":
+      const insertSong = interaction.options.getString("song");
+      musicBot.queue.insertSongAtIndex(1, insertSong);
+      await interaction.reply(`Inserted ${insertSong} at index 1.`);
       break;
 
     /* ----------------------- playlist managment -----------------------*/

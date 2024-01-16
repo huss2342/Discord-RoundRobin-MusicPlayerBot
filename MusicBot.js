@@ -169,9 +169,12 @@ class MusicBot {
     await this.playNextSong();
   }
 
-  skipSong() {
+  async skipSong(interaction) {
     if (!this.queue.isEmpty()) {
       this.playNextSong();
+      await interaction.reply("Skipped the current song.");
+    } else {
+      await interaction.reply("No next songs in the queue.");
     }
   }
 

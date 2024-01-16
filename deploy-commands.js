@@ -105,7 +105,36 @@ const commands = [
       },
     ],
   },
-
+  {
+  name: "insert_at_index",
+  description: "Inserts a song into the queue",
+  options: [
+    {
+      name: "index",
+      type: 4,
+      description: "The index to insert the song at",
+      required: true,
+    },
+    {
+      name: "url",
+      type: 3,
+      description: "The URL of the song to insert",
+      required: true,
+    },
+  ],
+  },
+  {
+    name: "insert_next",
+    description: "Inserts a song into the queue",
+    options: [
+      {
+        name: "url",
+        type: 3,
+        description: "The URL of the song to insert",
+        required: true,
+      },
+    ],
+  },
 
   {
     name: "createplaylist",
