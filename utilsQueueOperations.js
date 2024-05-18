@@ -24,7 +24,7 @@ function removeOperation(queue, index) {
 function stringifyQueueWithIndex(queue) {
   let queueString = "";
   queue.getQueue().forEach((item, index) => {
-    queueString += `${index + 1}: ${item.song.url} (Added by ${
+    queueString += `${index + 1}: ${item.song.name} (Added by ${
       item.addedBy
     })\n`;
   });
