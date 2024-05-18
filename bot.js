@@ -17,10 +17,12 @@ const {
   removeOperation,
   stringifyQueueWithIndex,
 } = require("./utilsQueueOperations");
+const {cleanupSongsUtil} = require("./utils");
 
 client.once("ready", () => {
   console.log("------------------------------");
   console.log("Ready!");
+  cleanupSongsUtil(guildId);
 });
 
 // --------------- FSM TO HANDLE COMMANDS ----------------
@@ -43,8 +45,8 @@ client.on("interactionCreate", async (interaction) => {
       break;
 
     case "current_song":
-      const currentSong = musicBot.getCurrentSong();
-      if (currentSong) {
+      const currentSong = await musicBot.getCurrentSong();
+      if (currentSong ) {
         await interaction.reply(`Currently playing: ${currentSong.url}`);
       } else {
         await interaction.reply("Nothing is currently playing.");

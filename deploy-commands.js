@@ -24,7 +24,7 @@ const commands = [
     description: "Plays a song from YouTube",
     options: [
       {
-        name: "url",
+        name: "url/name",
         type: 3,
         description: "The URL of the song to play",
         required: true,

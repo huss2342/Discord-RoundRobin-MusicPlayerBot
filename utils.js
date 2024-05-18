@@ -67,13 +67,15 @@ function downloadSongUtil(url, path) {
 }
 
 function deleteSongFileUtil(filePath) {
-    fs.unlink(filePath, (err) => {
-        if (err) {
-            console.error("Error deleting song file:", err);
-        } else {
-            console.log(`Deleted song file: ${filePath}`);
-        }
-    });
+    setTimeout(() => {
+        fs.unlink(filePath, (err) => {
+            if (err) {
+                console.error("Error deleting song file:", err);
+            } else {
+                console.log(`Deleted song file: ${filePath}`);
+            }
+        });
+    }, 10000); // Delay of 10 seconds
 }
 
 function invalidSongURL(songUrl){
