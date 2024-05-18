@@ -48,22 +48,29 @@ class MusicBot {
         }
 
         let songUrl = interaction.options.getString("url");
+        let songName = ""
 
         if (this.invalidURL(songUrl)) {
             // If the provided input is not a valid URL, perform a search
-            const searchResults = await ytsr(songUrl, {limit: 1});
+            const searchResults = await ytsr(songUrl, { limit: 1 });
             if (searchResults.items.length > 0) {
                 songUrl = searchResults.items[0].url;
+                songName = searchResults.items[0].title;
             } else {
                 await interaction.reply("No matching song found.");
                 return;
             }
+        } else {
+            // If a valid URL is provided, fetch the video details to get the song name
+            const videoInfo = await ytdl.getInfo(songUrl);
+            songName = videoInfo.videoDetails.title;
         }
 
         const songPath = this.createTempFileForGuild(interaction.guildId);
         const song = {
             url: songUrl,
             path: songPath,
+            name: songName,
             textChannel: interaction.channel,
             addedBy: interaction.member.user.username,
         };
@@ -72,11 +79,7 @@ class MusicBot {
         console.log(`${song.addedBy} added ${song.url} to the queue.`);
 
         if (!this.isPlaying) {
-            this.previousSongPath = this.currentSong ? this.currentSong.path : null;
             await this.playNextSong(); // Start playing only if nothing is currently playing
-            if (this.previousSongPath) {
-                deleteSongFileUtil(this.previousSongPath);
-            }
         } else {
             console.log("Queued song.");
             await interaction.reply(`Song added to the queue.`);
@@ -179,8 +182,8 @@ class MusicBot {
     async handleIdle() {
         console.log("Player is idle.");
         if (this.connection && this.currentSong) {
-            console.log("Deleting current song");
-            console.log(this.currentSong);
+            // console.log("Deleting current song");
+            // console.log(this.currentSong);
             deleteSongFileUtil(this.currentSong.path);
         }
         await this.playNextSong();
