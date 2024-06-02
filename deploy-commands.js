@@ -24,7 +24,7 @@ const commands = [
     description: "Plays a song from YouTube",
     options: [
       {
-        name: "url/name",
+        name: "url_or_name",
         type: 3,
         description: "The URL of the song to play",
         required: true,
@@ -70,110 +70,25 @@ const commands = [
     ],
   },
   {
-    name: "move",
-    description: "Moves a song to a different position in the queue",
-    options: [
-      {
-        name: "positions",
-        type: 3,
-        description: "Enter the current and new positions separated by a colon (e.g., '2:5')",
-        required: true,
-      },
-    ],
-  },
-  {
-    name: "swap",
-    description: "Swaps two songs in the queue",
-    options: [
-      {
-        name: "indexes",
-        type: 3,
-        description: "Enter the two indexes to swap separated by a colon (e.g., '3:5')",
-        required: true,
-      },
-    ],
-  },
-  {
     name: "remove_index",
     description: "Removes a song from the queue",
     options: [
       {
-        name: "name",
-        type: 3,
-        description: "Name of the song to remove \n seperated by a comma, use a '-' to remove a range of songs",
+        name: "index",
+        type: 4,
+        description: "The index of the song to remove",
         required: true,
       },
     ],
   },
   {
-  name: "insert_at_index",
-  description: "Inserts a song into the queue",
-  options: [
-    {
-      name: "index",
-      type: 4,
-      description: "The index to insert the song at",
-      required: true,
-    },
-    {
-      name: "url",
-      type: 3,
-      description: "The URL of the song to insert",
-      required: true,
-    },
-  ],
-  },
-  {
-    name: "insert_next",
+    name: "play_next",
     description: "Inserts a song into the queue",
     options: [
       {
-        name: "url",
+        name: "url_or_name",
         type: 3,
         description: "The URL of the song to insert",
-        required: true,
-      },
-    ],
-  },
-
-  {
-    name: "createplaylist",
-    description: "Creates a new playlist",
-    options: [
-      {
-        name: "name",
-        type: 3,
-        description: "Name of the playlist",
-        required: true,
-      },
-    ],
-  },
-  {
-    name: "addtoplaylist",
-    description: "Adds a song to a playlist",
-    options: [
-      {
-        name: "playlist",
-        type: 3,
-        description: "Name of the playlist",
-        required: true,
-      },
-      {
-        name: "song",
-        type: 3,
-        description: "Song to add",
-        required: true,
-      },
-    ],
-  },
-  {
-    name: "viewplaylist",
-    description: "Views the songs in a playlist",
-    options: [
-      {
-        name: "name",
-        type: 3,
-        description: "Name of the playlist",
         required: true,
       },
     ],

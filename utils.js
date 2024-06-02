@@ -28,7 +28,7 @@ function cleanupSongsUtil(guildId) {
             });
 
             // Remove the directory as well
-            fs.rm(guildDirectory, { recursive: true }, err => {
+            fs.rm(guildDirectory, {recursive: true}, err => {
                 if (err) {
                     console.error(`Error deleting directory ${guildDirectory}:`, err);
                 } else {
@@ -44,7 +44,7 @@ function cleanupSongsUtil(guildId) {
 function createTempFileForGuildUtil(guildId) {
     const guildDirectory = path.join(__dirname, `temp_${guildId}`);
     if (!fs.existsSync(guildDirectory)) {
-        fs.mkdirSync(guildDirectory, { recursive: true });
+        fs.mkdirSync(guildDirectory, {recursive: true});
     }
 
     // Create a unique file name
@@ -56,10 +56,10 @@ function createTempFileForGuildUtil(guildId) {
 
 function downloadSongUtil(url, path) {
     console.log("Downloading song:", url, "to path:", path);
-    const stream = ytdl(url, { filter: "audioonly" });
+    const stream = ytdl(url, {filter: "audioonly"});
     const writer = fs.createWriteStream(path);
     stream.pipe(writer);
-    
+
     return new Promise((resolve, reject) => {
         writer.on("finish", resolve);
         writer.on("error", reject);
@@ -75,11 +75,50 @@ function deleteSongFileUtil(filePath) {
                 console.log(`Deleted song file: ${filePath}`);
             }
         });
-    }, 10000); // Delay of 10 seconds
+    }, 15000);
 }
 
-function invalidSongURL(songUrl){
+function invalidSongURL(songUrl) {
     return (!songUrl || !ytdl.validateURL(songUrl));
+}
+
+function stringifyQueueWithIndex(queue) {
+    let queueString = "";
+    queue.getQueue().forEach((item, index) => {
+        queueString += `${index}: ${item.song.name} (Added by ${item.addedBy})\n`;
+    });
+    return queueString;
+}
+
+function splitMessage(message, maxLength) {
+    const messageParts = [];
+    let currentPart = "";
+
+    message.split("\n").forEach((line) => {
+        if (line.length > maxLength) {
+            // If the line itself exceeds the max length, split it into smaller parts
+            const lineParts = line.match(new RegExp(`.{1,${maxLength}}`, 'g'));
+            lineParts.forEach((part) => {
+                if (currentPart.length + part.length + 1 <= maxLength) {
+                    currentPart += part + "\n";
+                } else {
+                    messageParts.push(currentPart.trim());
+                    currentPart = part + "\n";
+                }
+            });
+        } else if (currentPart.length + line.length + 1 <= maxLength) {
+            currentPart += line + "\n";
+        } else {
+            messageParts.push(currentPart.trim());
+            currentPart = line + "\n";
+        }
+    });
+
+    if (currentPart.length > 0) {
+        messageParts.push(currentPart.trim());
+    }
+
+    return messageParts;
 }
 
 module.exports = {
@@ -87,5 +126,8 @@ module.exports = {
     createTempFileForGuildUtil,
     downloadSongUtil,
     deleteSongFileUtil,
-    invalidSongURL
+    invalidSongURL,
+    splitMessage,
+
+    stringifyQueueWithIndex,
 };

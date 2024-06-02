@@ -1,116 +1,106 @@
 class Queue {
-  constructor() {
-    this.queue = [];
-  }
 
-  shift() {
-    if (this.isEmpty()) {
-      console.error("Queue is empty");
-      return;
+    constructor() {
+        this.queue = [];
     }
-    return this.queue.shift();
-  }
 
-  push(element, person) {
-    if (!element || !person) {
-      console.error("Invalid input");
-      return;
+
+    update() {
+        if (this.isEmpty()) {
+            return;
+        }
+
+        const uniqueUsers = [...new Set(this.queue.map((item) => item.addedBy))];
+
+        if (uniqueUsers.length === 1) {
+            // If all songs are added by the same person, no need to reorganize
+            return;
+        }
+
+        const fairQueue = [];
+        let currentIndex = 0;
+
+        while (this.queue.length > 0) {
+            const currentUser = uniqueUsers[currentIndex];
+            const userSong = this.queue.find((item) => item.addedBy === currentUser);
+
+            if (userSong) {
+                fairQueue.push(userSong);
+                this.queue = this.queue.filter((item) => item !== userSong);
+            }
+
+            currentIndex = (currentIndex + 1) % uniqueUsers.length;
+        }
+
+        this.queue = fairQueue;
     }
-    const queueElement = {
-      addedBy: person,
-      song: element,
-      dateAdded: new Date(),
-    };
-    this.queue.push(queueElement);
-  }
 
-  isEmpty() {
-    return this.queue.length === 0;
-  }
-
-  clear() {
-    this.queue = [];
-  }
-
-  getQueue() {
-    return this.queue;
-  }
-
-  getQueueLength() {
-    return this.queue.length;
-  }
-
-  getQueueElement(index) {
-    if (index < 0 || index >= this.queue.length) {
-      console.error("Index out of bounds");
-      return;
+    shift() {
+        if (this.isEmpty()) {
+            console.error("Queue is empty");
+            return;
+        }
+        return this.queue.shift();
     }
-    return this.queue[index];
-  }
 
-  skipMultiple(index) {
-    if (index < 0 || index > this.queue.length) {
-      console.error("Index out of bounds");
-      return;
+    push(element, person) {
+        if (!element || !person) {
+            console.error("Invalid input");
+            return;
+        }
+        const queueElement = {
+            addedBy: person,
+            song: element,
+            dateAdded: new Date(),
+        };
+        this.queue.push(queueElement);
+        this.update();
     }
-    this.queue.splice(0, index);
-  }
 
-  jumpToIndex(index) {
-    if (index < 0 || index >= this.queue.length) {
-      console.error("Index out of bounds");
-      return;
+    // push element to the front of the queue
+    unshift(element, person) {
+        if (!element || !person) {
+            console.error("Invalid input");
+            return;
+        }
+        const queueElement = {
+            addedBy: person,
+            song: element,
+            dateAdded: new Date(),
+        };
+        this.queue.unshift(queueElement);
+        this.update();
     }
-    let element = this.queue.splice(index, 1)[0];
-    this.queue.unshift(element);
-  }
 
-  stringifyQueueWithIndex() {
-    let queueString = "";
-    for (let i = 0; i < this.queue.length; i++) {
-      queueString += `${i}: Added by ${this.queue[i].addedBy} - Song: ${
-        this.queue[i].song
-      } - Date Added: ${this.queue[i].dateAdded.toISOString()}\n`;
+    isEmpty() {
+        return this.queue.length === 0;
     }
-    return queueString;
-  }
 
-  removeQueueElement(index) {
-    if (index < 0 || index >= this.queue.length) {
-      console.error("Index out of bounds");
-      return;
+    clear() {
+        this.queue = [];
     }
-    this.queue.splice(index, 1);
-  }
 
-  swapQueueElements(index1, index2) {
-    if (
-      index1 < 0 ||
-      index1 >= this.queue.length ||
-      index2 < 0 ||
-      index2 >= this.queue.length
-    ) {
-      console.error("Index out of bounds");
-      return;
+    getQueue() {
+        return this.queue;
     }
-    let temp = this.queue[index1];
-    this.queue[index1] = this.queue[index2];
-    this.queue[index2] = temp;
-  }
 
-  moveQueueElement(index, newIndex) {
-    if (
-      index < 0 ||
-      index >= this.queue.length ||
-      newIndex < 0 ||
-      newIndex >= this.queue.length
-    ) {
-      console.error("Index out of bounds");
-      return;
+    jumpToIndex(index) {
+        if (index < 0 || index >= this.queue.length) {
+            console.error("Index out of bounds");
+            return;
+        }
+        this.queue.splice(0, index);
     }
-    let element = this.queue.splice(index, 1)[0];
-    this.queue.splice(newIndex, 0, element);
-  }
+
+    removeQueueElement(index) {
+        if (index < 0 || index >= this.queue.length) {
+            console.error("Index out of bounds");
+            return;
+        }
+        this.queue.splice(index, 1);
+        this.update();
+    }
+
 }
 
 module.exports = Queue;

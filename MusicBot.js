@@ -7,7 +7,8 @@ const {
 } = require("@discordjs/voice");
 const fs = require("fs");
 const ytsr = require("ytsr");
-// -- my imports --
+const ytdl = require('ytdl-core');
+const ytpl = require('ytpl');
 const {
     cleanupSongsUtil,
     createTempFileForGuildUtil,
@@ -16,14 +17,11 @@ const {
     invalidSongURL,
 } = require("./utils");
 
-const Queue = require("./Queue");
-const Playlist = require("./Playlist");
-const PlaylistManager = require("./PlaylistManager");
 
+const Queue = require("./Queue");
 class MusicBot {
     constructor() {
         this.queue = new Queue();
-        this.playlistManager = new PlaylistManager();
         this.isPlaying = false; // more like 'isQueueNotEmpty'
         this.currentSong = null;
         this.previousSongPath = null;
@@ -35,7 +33,6 @@ class MusicBot {
         this.player.on(AudioPlayerStatus.Idle, async () => this.handleIdle());
     }
 
-    // getCurrentSong method
     async getCurrentSong() {
         return this.currentSong;
     }
@@ -47,7 +44,9 @@ class MusicBot {
             return;
         }
 
-        let songUrl = interaction.options.getString("url");
+        await interaction.deferReply();
+
+        let songUrl = interaction.options.getString("url_or_name");
         let songName = ""
 
         if (this.invalidURL(songUrl)) {
@@ -60,29 +59,53 @@ class MusicBot {
                 await interaction.reply("No matching song found.");
                 return;
             }
-        } else {
-            // If a valid URL is provided, fetch the video details to get the song name
-            const videoInfo = await ytdl.getInfo(songUrl);
-            songName = videoInfo.videoDetails.title;
         }
 
-        const songPath = this.createTempFileForGuild(interaction.guildId);
-        const song = {
-            url: songUrl,
-            path: songPath,
-            name: songName,
-            textChannel: interaction.channel,
-            addedBy: interaction.member.user.username,
-        };
+        let replyMessage = "Okay!";
+        const isPlaylist = songUrl.includes('list=');
+        if (isPlaylist) {
+            // Handle playlist
+            const playlistId = songUrl.split('list=')[1];
+            const playlistInfo = await ytpl(playlistId);
 
-        this.queue.push(song, song.addedBy);
-        console.log(`${song.addedBy} added ${song.url} to the queue.`);
+            playlistInfo.items.forEach((item) => {
+                const song = {
+                    url: item.shortUrl,
+                    path: this.createTempFileForGuild(interaction.guildId),
+                    name: item.title,
+                    textChannel: interaction.channel,
+                    addedBy: interaction.member.user.username,
+                };
+                this.queue.push(song, song.addedBy);
+            });
+
+            replyMessage = `Added ${playlistInfo.items.length} songs from the playlist to the queue.`;
+
+        } else {
+            // Handle single song
+            const videoInfo = await ytdl.getInfo(songUrl);
+            songName = videoInfo.videoDetails.title;
+
+            const songPath = this.createTempFileForGuild(interaction.guildId);
+            const song = {
+                url: songUrl,
+                path: songPath,
+                name: songName,
+                textChannel: interaction.channel,
+                addedBy: interaction.member.user.username,
+            };
+
+            this.queue.push(song, song.addedBy);
+            console.log(`${song.addedBy} added ${song.url} to the queue.`);
+            replyMessage = `Song added to the queue.`;
+        }
 
         if (!this.isPlaying) {
             await this.playNextSong(); // Start playing only if nothing is currently playing
+            await interaction.followUp("got it");
         } else {
             console.log("Queued song.");
-            await interaction.reply(`Song added to the queue.`);
+            await interaction.followUp(replyMessage);
             // No need to call playNextSong here as it will be triggered by AudioPlayerStatus.Idle when the current song ends
         }
     }
@@ -120,33 +143,75 @@ class MusicBot {
         }
     }
 
-    createPlaylist(name) {
-        this.playlistManager.createPlaylist(name);
-    }
+    async insertSongAtIndex(songUrl, interaction) {
+        if (!songUrl) {
+            console.error("Invalid input");
+            return;
+        }
+        // check if the queue is empty
+        if (this.queue.isEmpty()) {
+            console.error("Queue is empty, use play");
+            return;
+        }
 
-    addSongToPlaylist(name, song, addedBy) {
-        const playlist = this.playlistManager.getPlaylist(name);
-        if (playlist) {
-            playlist.addSong(song, addedBy);
+        console.log("songURL: ", songUrl);
+
+        let replyMessage = "Okay!";
+
+        // Defer the reply to acknowledge the interaction
+        await interaction.deferReply();
+
+        if (this.invalidURL(songUrl)) {
+            // If the provided input is not a valid URL, perform a search
+            const searchResults = await ytsr(songUrl, { limit: 1 });
+            if (searchResults.items.length > 0) {
+                songUrl = searchResults.items[0].url;
+            } else {
+                await interaction.followUp("No matching song found.");
+                return;
+            }
+        }
+
+        const isPlaylist = songUrl.includes('list=');
+
+        if (isPlaylist) {
+            // Handle playlist
+            const playlistId = songUrl.split('list=')[1];
+            const playlistInfo = await ytpl(playlistId);
+
+            const playlistSongs = playlistInfo.items.map((item) => ({
+                url: item.shortUrl,
+                path: this.createTempFileForGuild(interaction.guildId),
+                name: item.title,
+                textChannel: interaction.channel,
+                addedBy: interaction.member.user.username,
+            }));
+
+            playlistSongs.forEach((song) => {
+                this.queue.unshift(song, interaction.member.user.username);
+            });
+
+            replyMessage = `Added ${playlistSongs.length} songs from the playlist to the top of the queue.`;
         } else {
-            console.log("Playlist not found.");
-        }
-    }
+            // Handle single song
+            const videoInfo = await ytdl.getInfo(songUrl);
+            const songName = videoInfo.videoDetails.title;
+            const songPath = this.createTempFileForGuild(interaction.guildId);
 
-    viewPlaylist(name) {
-        const playlist = this.playlistManager.getPlaylist(name);
-        return playlist ? playlist.viewAllSongs() : "Playlist not found.";
-    }
+            const song = {
+                url: songUrl,
+                path: songPath,
+                name: songName,
+                textChannel: interaction.channel,
+                addedBy: interaction.member.user.username,
+            };
 
-    playSongFromPlaylist(playlistName, index) {
-        const songUrl = this.playlistManager.playSongFromPlaylist(
-            playlistName,
-            index
-        );
-        if (songUrl) {
-            // Logic to play song from URL
-            console.log(`Playing ${songUrl} from playlist ${playlistName}`);
+            this.queue.unshift(song, interaction.member.user.username);
+            console.log(`${song.addedBy} added ${song.url} to the top of the queue.`);
+            replyMessage = `Queued ${songName} to the top of the queue.`;
         }
+
+        await interaction.followUp(replyMessage);
     }
 
     ensureConnection() {
