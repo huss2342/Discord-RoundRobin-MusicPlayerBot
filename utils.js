@@ -54,15 +54,28 @@ function createTempFileForGuildUtil(guildId) {
     return filePath;
 }
 
-function downloadSongUtil(url, path) {
-    console.log("Downloading song:", url, "to path:", path);
-    const stream = ytdl(url, {filter: "audioonly"});
-    const writer = fs.createWriteStream(path);
-    stream.pipe(writer);
+const { exec } = require('youtube-dl-exec');
 
+function downloadSongUtil(url, path) {
     return new Promise((resolve, reject) => {
-        writer.on("finish", resolve);
-        writer.on("error", reject);
+        console.log("Downloading song:", url, "to path:", path);
+        exec(url, {
+            output: path,
+            extractAudio: true,
+            audioFormat: 'mp3',
+            audioQuality: 0,
+            noCheckCertificates: true,
+            preferFreeFormats: true,
+            youtubeSkipDashManifest: true,
+            referer: 'https://www.youtube.com/',
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
+        }).then(() => {
+            console.log('Download completed successfully');
+            resolve();
+        }).catch((error) => {
+            console.error('Error downloading:', error);
+            reject(error);
+        });
     });
 }
 

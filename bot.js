@@ -96,6 +96,11 @@ client.on("interactionCreate", async (interaction) => {
             const insertSongUrl = interaction.options.getString("url_or_name");
             await musicBot.insertSongAtIndex(insertSongUrl, interaction);
             break;
+
+        case "reset":
+            await musicBot.reset();
+            await interaction.reply('Bot has been reset!');
+            break;
     }
 });
 

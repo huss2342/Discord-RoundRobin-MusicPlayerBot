@@ -93,6 +93,10 @@ const commands = [
       },
     ],
   },
+  {
+    name: "reset",
+    description: "Resets the bot",
+  }
 ];
 
 const rest = new REST({ version: "9" }).setToken(token);

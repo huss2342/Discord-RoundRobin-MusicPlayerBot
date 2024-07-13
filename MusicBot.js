@@ -16,9 +16,11 @@ const {
     deleteSongFileUtil,
     invalidSongURL,
 } = require("./utils");
-
+const { Player } = require("discord-player");
+const { EmbedBuilder  } = require("discord.js");
 
 const Queue = require("./Queue");
+
 class MusicBot {
     constructor() {
         this.queue = new Queue();
@@ -51,7 +53,7 @@ class MusicBot {
 
         if (this.invalidURL(songUrl)) {
             // If the provided input is not a valid URL, perform a search
-            const searchResults = await ytsr(songUrl, { limit: 1 });
+            const searchResults = await ytsr(songUrl, {limit: 1});
             if (searchResults.items.length > 0) {
                 songUrl = searchResults.items[0].url;
                 songName = searchResults.items[0].title;
@@ -122,15 +124,17 @@ class MusicBot {
         // console.log("Playing next song:", this.currentSong);
 
         try {
+            this.ensureConnection();
+
             const songUrl = this.currentSong.url;
             const songPath = this.currentSong.path;
             await this.downloadSongUtil(songUrl, songPath);
+
             const resource = createAudioResource(songPath, {
                 inputType: StreamType.Arbitrary,
             });
-
             this.player.play(resource);
-            this.ensureConnection();
+            this.player.play(resource);
 
             if (
                 this.currentSong.textChannel &&
@@ -163,7 +167,7 @@ class MusicBot {
 
         if (this.invalidURL(songUrl)) {
             // If the provided input is not a valid URL, perform a search
-            const searchResults = await ytsr(songUrl, { limit: 1 });
+            const searchResults = await ytsr(songUrl, {limit: 1});
             if (searchResults.items.length > 0) {
                 songUrl = searchResults.items[0].url;
             } else {
@@ -305,6 +309,30 @@ class MusicBot {
 
     invalidURL(songUrl) {
         return invalidSongURL(songUrl);
+    }
+
+    async reset() {
+        this.queue.clear();
+        this.isPlaying = false;
+        this.currentSong = null;
+        this.previousSongPath = null;
+        this.paused = false;
+
+        if (this.player) {
+            this.player.stop();
+        }
+
+        if (this.connection) {
+            this.connection.destroy();
+            this.connection = null;
+        }
+
+        if (this.voiceChannel) {
+            this.cleanupSongs(this.voiceChannel.guild.id);
+            this.voiceChannel = null;
+        }
+
+        console.log("MusicBot has been reset.");
     }
 }
 
